@@ -1,0 +1,23 @@
+[package]
+name = "kra"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "kra"
+crate-type = ["cdylib"]
+
+[dependencies]
+polars = { version = "0.36.2", features = ["fmt", "dtype-date", "dtype-array"], default-features = false }
+polars-core = { version = "0.36.2", default-features = false }
+polars-ffi = { version = "0.36.2", default-features = false }
+polars-plan = { version = "0.36.2", default-feautres = false }
+polars-lazy = { version = "0.36.2", default-features = false }
+pyo3 = { version = "0.20", features = ["extension-module", "abi3-py37"] }
+pyo3-polars = {version = "0.10.0", features = ["derive"]}
+ndarray = "0.15.3"
+numpy = "0.20.0"
+itertools = "0.12.0"
+rayon = "1.7.0"
+
+[workspace]

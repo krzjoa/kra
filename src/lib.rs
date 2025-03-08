@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 fn encode_labels_(series: Series) -> Result<Series, PolarsError>{
 
-    let mut values_map: HashMap<&str, series.> = HashMap::new();
+    let mut values_map: HashMap<&str, u32> = HashMap::new();
     let mut last_idx: u32 = 0;
     let mut vector = vec![last_idx; series.len()];
 

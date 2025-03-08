@@ -2,6 +2,19 @@ import polars as pl
 from kra.polars_api import extend_polars, extend_polars_dataframe
 
 
+class Cloneable:
+
+    def __init__(self, df: pl.DataFrame) -> None:
+        self._df = df
+
+    def _clone_if(self, in_place) -> pl.DataFrame:
+        if not in_place:
+            df = self._df.clone()
+        else:
+            df = self._df
+        return df
+
+
 @extend_polars_dataframe
 def to_dod(df: pl.DataFrame, key: str) -> dict:
     """Turn polars DataFrame to dict of dicts, using a column as dictionary

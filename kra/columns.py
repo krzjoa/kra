@@ -1,18 +1,7 @@
 import polars as pl
 import re
 
-
-class Cloneable:
-
-    def __init__(self, df: pl.DataFrame) -> None:
-        self._df = df
-
-    def _clone_if(self, in_place) -> pl.DataFrame:
-        if not in_place:
-            df = self._df.clone()
-        else:
-            df = self._df
-        return df
+from kra.utils import Cloneable
 
 
 @pl.api.register_dataframe_namespace('cols')

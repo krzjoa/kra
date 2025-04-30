@@ -10,18 +10,17 @@ class LabelExpr:
         self._expr = expr
     
     def encode(self):
-        pass
-
-
+        return self._expr.cast(pl.String).cast(pl.Categorical).to_physical()
 
 
 @pl.api.register_series_namespace('label')
-class LabelSecris:
+class LabelSeries:
 
     def __init__(self, series: pl.Series) -> None:
         self._series = series
     
     def encode(self):
-        d = {k: v for v, k in enumerate(self._series.unique())}
-        return self._series.replace(d, return_dtype=pl.Int32)
+        return self._series.cast(pl.String).cast(pl.Categorical).to_physical()
+        # d = {k: v for v, k in enumerate(self._series.unique())}
+        # return self._series.replace(d, return_dtype=pl.Int32)
         

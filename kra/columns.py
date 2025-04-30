@@ -31,3 +31,28 @@ class Cols(Cloneable):
     
     def replace(self, pattern: str | re.Pattern, repl: str, in_place: bool = False):
         return self.apply(lambda x: re.sub(pattern, repl, x), in_place=in_place)
+    
+    def has_all(self, columns: list[str], return_missing: bool = True) -> bool | tuple[bool, list[str]]:
+        missing = self._missing_cols(columns)
+        if return_missing:
+            return len(missing) == 0, missing
+        return len(missing) == 0
+    
+    def has_any(self, columns: list[str]) -> bool:
+        return len(self._common_cols(columns)) > 0
+    
+    def has_exactly(self, columns: list[str]) -> bool:
+        return set(columns) == set(self._df.columns)
+    
+    def rename(self, mapping: dict[str, str]) -> pl.DataFrame:
+        """A non-strict version of DataFrame.rename() method.
+           It skips missing keys without raising an error.
+        """
+        mapping = {k:v for k, v in mapping.items() if k in self._df.columns}
+        return self._df.rename(mapping)
+                 
+    def _common_cols(self, columns: list[str]):
+        return set(columns).intersection(set(self._df.columns))
+
+    def _missing_cols(self, columns: list[str]):
+        return set(columns).difference(set(self._df.columns))

@@ -1,4 +1,6 @@
-# simple extension
+# kra
+
+> A set of useful tools to work with `polars`
 
 Here, we use [`maturin`][maturin] for building Python wheels and
 [`nox`][nox] for managing Python dependencies and virtualenvs.

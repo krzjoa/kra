@@ -19,7 +19,7 @@ class Cols(Cloneable):
     Example
     --------
     >>> import polars as pl
-    >>> import kra  # noqa: F401, needed for registration
+    >>> import kra
     >>> df = pl.DataFrame({"First Name": [1], "Last Name": [2]})
     >>> df.cols.to_snakecase()
     shape: (1, 2)

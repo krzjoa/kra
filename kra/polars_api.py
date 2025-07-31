@@ -1,3 +1,4 @@
+
 import polars as pl
 import polars.dataframe.group_by as plg 
 
@@ -18,3 +19,7 @@ def extend_polars(fun: callable):
     setattr(pl, fun.__name__, fun)
     return fun
 
+def extend_polars_series(fun: callable):
+    """Decorator to extend polars Series API"""
+    setattr(pl.Series, fun.__name__, fun)
+    return fun 

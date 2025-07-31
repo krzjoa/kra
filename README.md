@@ -24,7 +24,6 @@ nox
 - **Column utilities**: Easily rename, check, and transform DataFrame columns.
 - **Label encoding**: Encode string labels as categorical/integer values.
 - **Dict-of-dicts conversion**: Convert between DataFrames and nested dictionaries.
-- **Rust-powered label encoding**: Fast label encoding via Rust extension.
 
 ---
 

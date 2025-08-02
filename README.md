@@ -2,21 +2,25 @@
 
 A set of useful tools to work with [polars](https://pola-rs.github.io/polars/), providing convenient extensions for DataFrame manipulation, column operations, label encoding, and more.
 
+
 ## Installation
 
-Build and install the Rust extension and Python API using [maturin](https://github.com/PyO3/maturin):
+Install kra from PyPI using pip:
 
 ```sh
-pip install maturin
-maturin develop
+pip install kra
 ```
 
-Or, for development and testing:
+To build and install a local version for development or testing:
 
 ```sh
-pip install nox
-nox
+pip install build
+python -m build
+pip install dist/kra-*.whl
 ```
+
+This will build the wheel and install it into your current environment.
+
 
 ## Features
 
@@ -126,6 +130,9 @@ df = kra.from_arraylike(data, schema=["x", "y"], orient="col")
 
 ---
 
+
+---
+
 ## API Reference
 
 - `kra.from_dod`: Create DataFrame from dict of dicts.
@@ -140,12 +147,7 @@ For more, see the intro.ipynb notebook.
 
 ---
 
-## Rust Extension
-
 kra includes a Rust extension for fast label encoding, accessible via the Python API.
-
----
-
 ## License
 
 MIT License. See LICENSE for details.

@@ -232,6 +232,79 @@ def split_entries_by(df: pl.DataFrame, column: str) -> pl.DataFrame:
         .with_columns(pl.lit(1).alias(column))
 
 
+@extend_polars_dataframe
+def drop_rows(df: pl.DataFrame, row_idx: list[int] | int) -> pl.DataFrame:
+    """
+    Drop rows from the DataFrame based on their indices.
+
+    Parameters
+    ----------
+    row_indices : list of int
+        List of row indices to drop.
+
+    Returns
+    -------
+    pl.DataFrame
+        DataFrame with specified rows dropped.
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> import kra  # noqa: F401
+    >>> df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    >>> df.drop_rows([0, 2])
+    shape: (1, 2)
+    ┌─────┬─────┐
+    │ a   ┆ b   │
+    ├─────┼─────┤
+    │ 2   ┆ 5   │
+    └─────┴─────┘
+    """
+    if isinstance(row_idx, int):
+        row_idx = [row_idx]
+    mask = ~pl.arange(0, len(df)).is_in(row_idx)
+    return df.filter(mask)
+
+
+
+@extend_polars_dataframe
+def row_as_header(df: pl.DataFrame, row_idx: int = 0) -> pl.DataFrame:
+    """
+    Set a specified row as the header (column names) of the DataFrame.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        The DataFrame to modify.
+    row_idx : int, default 0
+        The index of the row to use as the new header.
+    Returns
+    -------
+    pl.DataFrame
+        DataFrame with the specified row set as the header.
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> import kra  # noqa: F401
+    >>> df = pl.DataFrame([["Name", "Age"], ["Alice", 30], ["Bob", 25]])
+    >>> df = kra.row_as_header(df, 0)
+    >>> df
+    shape: (2, 2)
+    ┌───────┬─────┐
+    │ Name  ┆ Age │
+    │ ---   ┆ --- │
+    │ str   ┆ i64 │
+    ╞═══════╪═════╡
+    │ Alice ┆ 30  │
+    │ Bob   ┆ 25  │
+    └───────┴─────┘
+    """
+    return df \
+            .rename({x:str(y) for x,y in zip(df.columns, df.row(row_idx))}) \
+            .filter(pl.arange(0, len(df)) != row_idx)
+
+
 @extend_polars_group_by
 def to_dicts(grouped_df: plg.GroupBy) -> dict:
     """

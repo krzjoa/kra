@@ -143,21 +143,14 @@ df = kra.from_arraylike(data, schema=["x", "y"], orient="col")
 
 ---
 
-## API Reference
-
-- `kra.from_dod`: Create DataFrame from dict of dicts.
-- `kra.to_dod`: Convert DataFrame to dict of dicts.
-- `kra.Cols`: DataFrame column utilities (access via `df.cols`).
-- `kra.LabelSeries`: Series label encoding (access via `series.label`).
-- `kra.LabelExpr`: Expression label encoding (access via `pl.col(...).label`).
-- `kra.drop_null_cols`: Remove columns of type Null.
-- `kra.from_arraylike`: Create DataFrame from array-like objects.
-
-For more, see the intro.ipynb notebook.
-
----
-
 kra includes a Rust extension for fast label encoding, accessible via the Python API.
+
+
+## Name
+
+The name of the library, `kra` means **ice floe** in Polish.
+
+
 ## License
 
 MIT License. See LICENSE for details.

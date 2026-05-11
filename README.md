@@ -6,6 +6,10 @@
 
 # kra
 
+[![Documentation Status](https://readthedocs.org/projects/kra/badge/?version=latest)](https://kra.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/kra.svg)](https://badge.fury.io/py/kra)
+[![Buy sticker](https://img.shields.io/badge/buy%20sticker-kra-green?style=flat&logo=redbubble)](https://www.redbubble.com/i/sticker/kra-by-krzjoa/180671136/7sgk?asc=u)
+
 A set of useful tools to work with [polars](https://pola-rs.github.io/polars/), providing convenient extensions for DataFrame manipulation, column operations, label encoding, and more.
 
 

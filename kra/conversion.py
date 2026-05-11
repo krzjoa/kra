@@ -6,6 +6,84 @@ import numpy.typing as npt
 import polars.dataframe.group_by as plg 
 from kra.polars_api import extend_polars, extend_polars_dataframe, extend_polars_group_by, extend_polars_series
 
+@extend_polars_dataframe
+def from_dict_rowwise(data: dict, key_col: str, val_col: str) -> pl.DataFrame:
+    """
+    Construct a DataFrame from a dictionary, assuming each key-value pair represents a row.
+
+    Parameters
+    ----------
+    data : dict
+        Dictionary where each key-value pair represents a row.
+    key_col : str
+        The name of the column to use for the keys of the dictionary.
+    val_col : str
+        The name of the column to use for the values of the dictionary.
+    
+    Returns
+    -------
+    pl.DataFrame
+        DataFrame constructed from the dictionary.
+    Examples
+    --------
+    >>> import polars as pl
+    >>> import kra  # noqa: F401
+    >>> data = {"a": 1, "b": 2}
+    >>> pl.from_dict_rowwise(data, "key", "value")
+    shape: (2, 2)
+    ┌─────┬───────┐
+    │ key ┆ value │
+    ├─────┼───────┤
+    │ a   ┆ 1     │
+    │ b   ┆ 2     │
+    └─────┴───────┘
+    """
+    return pl.DataFrame({key_col: list(data.keys()), val_col: list(data.values())})
+
+
+# TDOO: extend or not? That is the question.
+def from_matrix(arr: np.ndarray, 
+                schema: dict = {'x': pl.Int64, 'y': pl.Int64, 'value': pl.Float64},
+                condition: callable = lambda x: x != 0) -> np.ndarray:
+    """"Convert a 2D numpy array into a polars DataFrame with three columns: 'x', 'y', and 'value',
+    where 'x' and 'y' are the indices of the non-zero elements in the
+    array, and 'value' is the corresponding determined by the condition function (default is non-zero values).
+    
+    Parameters
+    ----------
+    arr : np.ndarray
+        2D numpy array to convert.
+    schema : dict
+        Schema for the resulting DataFrame columns.
+    condition : callable
+        Function to determine which elements to include based on their values.
+    Returns
+    -------
+    pl.DataFrame
+        DataFrame with columns 'x', 'y', and 'value' representing the non-zero elements of the array.
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import polars as pl
+    >>> import kra  # noqa: F401
+    >>> arr = np.array([[0, 2, 0], [3, 0, 4]])
+    >>> df = pl.from_matrix(arr)
+    >>> df
+    shape: (3, 3)
+    ┌─────┬─────┬───────┐
+    │ x   ┆ y   ┆ value │
+    ├─────┼─────┼───────┤
+    │ 0   ┆ 1   ┆ 2     │
+    │ 1   ┆ 0   ┆ 3     │
+    │ 1   ┆ 2   ┆ 4     │
+    └─────┴─────┴───────┘
+    """
+    idx = np.where(condition(arr))
+    val = arr[idx]
+    concat = np.concatenate([np.array(idx).T, val[:, None]], axis=1)
+    return pl.DataFrame(concat, schema=schema)
+
+
 
 @extend_polars_dataframe
 def to_dod(df: pl.DataFrame, key: str) -> dict:

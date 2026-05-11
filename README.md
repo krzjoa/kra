@@ -1,3 +1,9 @@
+<h1 align="center">
+    <a href="https://github.com/krzjoa/kra">
+        <img src="docs/img/logo.svg" alt="kra logo" width="320">
+  </a>
+</h1>
+
 # kra
 
 A set of useful tools to work with [polars](https://pola-rs.github.io/polars/), providing convenient extensions for DataFrame manipulation, column operations, label encoding, and more.

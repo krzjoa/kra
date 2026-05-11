@@ -1,5 +1,8 @@
 import polars as pl
+from polars._typing import IntoExpr
+from typing import Iterable
 from kra.utils import extend_polars_dataframe
+import polars.selectors as ps
 
 
 @extend_polars_dataframe
@@ -68,3 +71,84 @@ def fork(df: pl.DataFrame, new_dfs: list) -> list[pl.DataFrame]:
     """
     # TODO: 
     return [df.with_columns(**n) for n in new_dfs]
+
+
+@extend_polars_dataframe
+def agg(df: pl.DataFrame, 
+        *aggs: IntoExpr | Iterable[IntoExpr],
+        **named_aggs: IntoExpr) -> pl.DataFrame:
+    """
+    Aggreegate whole DataFrame as a single group. 
+    This is a convenient way to apply aggregation expressions to the entire DataFrame without needing to specify a group key.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        The DataFrame to aggregate.
+    *aggs : IntoExpr or Iterable[IntoExpr]
+        Positional aggregation expressions to apply to the DataFrame.
+    **named_aggs : IntoExpr
+        Named aggregation expressions, where the key is the name of the resulting column and the value is the aggregation expression.
+
+    Returns
+    -------
+    pl.DataFrame
+        Aggregated DataFrame.
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> import kra
+    >>> df = pl.DataFrame({"group": ["A", "A", "B"], "value": [1, 2, 3]})
+    >>> kra.agg(df, pl.col("value").sum().alias("total_value"))
+    shape: (1, 1)
+    ┌─────────────┐
+    │ total_value │
+    ├─────────────┤
+    │ 6           │
+    └─────────────┘
+    >>> kra.agg(df, total_value=pl.col("value").sum())
+    shape: (1, 1)
+    ┌─────────────┐
+    │ total_value │
+    ├─────────────┤
+    │ 6           │
+    └─────────────┘
+    """
+    return df.group_by(True) \
+             .agg(*aggs, **named_aggs) \
+             .select(pl.exclude(pl.col("*").first()))
+
+
+@extend_polars_dataframe
+def round(df: pl.DataFrame, decimals: int = 2) -> pl.DataFrame:
+    """
+    Round all numeric columns in the DataFrame to a specified number of decimal places.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        The DataFrame to round.
+    decimals : int
+        The number of decimal places to round to (default is 2).
+
+    Returns
+    -------
+    pl.DataFrame
+        DataFrame with all numeric columns rounded to the specified number of decimal places.
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> import kra
+    >>> df = pl.DataFrame({"a": [1.234, 2.345], "b": [3.456, 4.567], "c": ["x", "y"]})
+    >>> kra.round(df, decimals=1)
+    shape: (2, 3)
+    ┌─────┬─────┬─────┐
+    │ a   ┆ b   ┆ c   │
+    ├─────┼─────┼─────┤
+    │ 1.2 ┆ 3.5 ┆ x   │
+    │ 2.3 ┆ 4.6 ┆ y   │
+    └─────┴─────┴─────┘
+    """
+    return df.with_columns(ps.float().round(decimals))

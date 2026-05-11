@@ -3,6 +3,7 @@ import numpy as np
 import numpy.typing as npt
 
 import polars.dataframe.group_by as plg 
+import polars.selectors as ps
 
 from kra.polars_api import extend_polars, extend_polars_dataframe, extend_polars_group_by, extend_polars_series
 
@@ -24,6 +25,8 @@ class Cloneable:
 def maybe_col(name, default=None) -> pl.Expr:
     """
     Return a column expression for a column with the given name, or a default value if the column is missing.
+    If no value is provided for default, the expression will simply return the column if it exists or no column if it doesn't.
+    Thus, it can be used to select a column if it exists without causing an error if it doesn't, and without adding a new column if it doesn't exist.
 
     Parameters
     ----------
@@ -58,13 +61,58 @@ def maybe_col(name, default=None) -> pl.Expr:
     │ 0   │
     │ 0   │
     └─────┘
+    >>> df.select('a', kra.maybe_col("b"))
+    shape: (2, 1)
+    ┌─────┐
+    │ a   │
+    ├─────┤
+    │ 1   │
+    │ 2   │
+    └─────┘
+    # Note that no column 'b' is added to the DataFrame when using maybe_col without a default value, and that it simply returns no column instead of raising an error.
     """
     # https://github.com/pola-rs/polars/issues/18372
     col = pl.col(f"^{name}$")
-    if not default:
+    if default is None:
         return col
     expr = pl.struct(col, default).struct[0]
     return expr.alias(name)
+
+@extend_polars
+def col_if(name, condition):
+    """Return column if condition is true, otherwise return no column.
+      This is a convenient way to conditionally select a column in an expression without needing to write an if statement that branches into two separate expressions.
+      
+    Parameters
+    ----------
+    name : str  
+        The column name to select.
+    condition : bool
+        The condition to check.
+
+    Returns
+    -------
+    pl.Expr
+        A polars expression selecting the column if the condition is true, or no column if the condition is false.
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> import kra  # noqa: F401
+    >>> df = pl.DataFrame({"a": [1, 2], "b": [3, 4]})
+    >>> df.select(kra.col_if("a", True))
+    shape: (2, 1)
+    ┌─────┐
+    │ a   │
+    ├─────┤
+    │ 1   │
+    │ 2   │
+    └─────┘
+    """
+    if condition:
+        return pl.col(name)
+    return ps.by_name()
+
 
 
 @extend_polars_dataframe
@@ -175,8 +223,7 @@ def row_as_header(df: pl.DataFrame, row_idx: int = 0) -> pl.DataFrame:
             .rename({x:str(y) for x,y in zip(df.columns, df.row(row_idx))}) \
             .filter(pl.arange(0, len(df)) != row_idx)
 
-
-def no(df: pl.DataFrame) -> bool:
+def no_data(df: pl.DataFrame) -> bool:
     """
     Check if the DataFrame is null or empty.
 
@@ -195,12 +242,47 @@ def no(df: pl.DataFrame) -> bool:
     >>> import polars as pl
     >>> import kra  # noqa: F401
     >>> df_empty = pl.DataFrame()
-    >>> kra.no(df_empty)
+    >>> kra.no_data(df_empty)
     True
     >>> df_non_empty = pl.DataFrame({"a": [1]})
-    >>> kra.no(df_non_empty)
+    >>> kra.no_data(df_non_empty)
     False
-    >>> kra.no(None)
+    >>> kra.no_data(None)
     True
     """
     return (df is None) or (df.is_empty())
+
+
+@extend_polars_dataframe
+def highlight(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    Highlight every other row in the DataFrame by adding a boolean column 'highlight' that is True for every other row.
+    Helps with browsing large DataFrames in the calculation sheets or in the console by visually distinguishing rows.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        The DataFrame to modify.
+
+    Returns
+    -------
+    pl.DataFrame
+        DataFrame with an additional 'highlight' column indicating every other row.
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> import kra  # noqa: F401
+    >>> df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    >>> df.highlight()
+    shape: (3, 3)
+    ┌─────┬─────┬───────────┐
+    │ a   ┆ b   ┆ highlight │
+    ├─────┼─────┼───────────┤
+    │ 1   ┆ 4   ┆ true      │
+    │ 2   ┆ 5   ┆ false     │
+    │ 3   ┆ 6   ┆ true      │
+    └─────┴─────┴───────────┘
+
+    """
+    return df.with_columns(pl.col(pl.arange(0, len(df)) % 2 == 0).alias("highlight"))

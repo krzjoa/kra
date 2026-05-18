@@ -1,2 +1,4 @@
+sphinx
+alabaster
 myst-parser
 polars

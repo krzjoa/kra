@@ -10,7 +10,7 @@
 [![PyPI version](https://badge.fury.io/py/kra.svg)](https://badge.fury.io/py/kra)
 [![Buy sticker](https://img.shields.io/badge/buy%20sticker-kra-green?style=flat&logo=redbubble)](https://www.redbubble.com/i/sticker/kra-by-krzjoa/180671136/7sgk?asc=u)
 
-A set of useful tools to work with [polars](https://pola-rs.github.io/polars/), providing convenient extensions for DataFrame manipulation, column operations, label encoding, and more.
+A lightweight toolkit that extends [polars](https://pola-rs.github.io/polars/) with practical methods for cleaning data, standardizing schemas, encoding labels, and converting between common Python structures.
 
 
 ## Installation
@@ -34,113 +34,83 @@ This will build the wheel and install it into your current environment.
 
 ## Features
 
-- **DataFrame and Series extensions**: Add new methods to polars DataFrames and Series.
-- **Column utilities**: Easily rename, check, and transform DataFrame columns.
-- **Label encoding**: Encode string labels as categorical/integer values.
-- **Dict-of-dicts conversion**: Convert between DataFrames and nested dictionaries.
+- **Polars-native extensions**: New methods on DataFrame/Series/Expr (for example `df.cols.*`, `df.drop_null_cols()`, `pl.col(...).label.encode()`).
+- **Schema and column tools**: Fast bulk column renaming and validation (`to_snakecase`, `replace`, `has_all`, `rename` etc.).
+- **Data cleaning helpers**: Utilities for null-column removal, conditional column selection, aggregation, and rounding.
+- **Conversion utilities**: Easy conversion between DataFrames and dict-of-dicts, row-wise dicts, and array-like inputs.
+- **Composable workflow style**: Designed to chain naturally with regular polars expressions and transformations.
 
 ---
 
 ## Example Use Cases
 
-### 1. Dict-of-Dicts Conversion
-
-Convert a DataFrame to a dict of dicts using a column as the key:
+### 1. Clean and standardize an input table
 
 ```python
 import polars as pl
 import kra
 
 df = pl.DataFrame({
-    "id": [1, 2, 3],
-    "name": ["Alice", "Bob", "Charlie"]
+    "User ID": [1, 2, 3],
+    "Revenue": [12.349, 7.105, 9.999],
+    "Unused": [None, None, None]
 })
 
-dod = df.to_dod("id")
-# {1: {'id': 1, 'name': 'Alice'}, 2: {'id': 2, 'name': 'Bob'}, ...}
-
-# Convert back:
-df2 = kra.from_dod(dod, "id")
-```
-
----
-
-### 2. Column Name Transformations
-
-Transform column names to different cases:
-
-```python
-import polars as pl
-import kra
-
-df = pl.DataFrame({
-    "First Name": [1, 2],
-    "Last Name": [3, 4]
-})
-
-df_lower = df.cols.to_lowercase()
-df_camel = df.cols.to_camelcalse()
-df_snake = df.cols.to_snakecase()
-```
-
----
-
-### 3. Label Encoding
-
-Encode string labels as integers:
-
-```python
-import polars as pl
-import kra
-
-df = pl.DataFrame({
-    "label": ["cat", "dog", "cat", "bird"]
-})
-
-# Series API
-encoded = df["label"].label.encode()
-
-# Expression API (for use in with_columns, etc.)
-df2 = df.with_columns(
-    pl.col("label").label.encode().alias("encoded_label")
+clean = (
+    df
+    .cols.to_snakecase()      # user_id, revenue, unused
+    .drop_null_cols()         # remove null-typed columns
+    .with_columns(pl.col("revenue").round(2))
+    .select("user_id", kra.maybe_col("country", "unknown"), "revenue")
 )
 ```
 
 ---
 
-### 4. DataFrame Utilities
-
-Drop columns of type Null:
+### 2. Encode labels and export keyed records
 
 ```python
 import polars as pl
 import kra
 
 df = pl.DataFrame({
-    "a": [1, 2, 3],
-    "b": [None, None, None]
+    "event_id": [101, 102, 103, 104],
+    "event_type": ["click", "view", "click", "purchase"],
+    "value": [1.0, 0.3, 0.8, 4.2]
 })
 
-df_clean = df.drop_null_cols()
+enriched = df.with_columns(
+    pl.col("event_type").label.encode().alias("event_type_id")
+)
+
+records = enriched.to_dod("event_id")
+# {101: {'event_id': 101, 'event_type': 'click', 'value': 1.0, 'event_type_id': 0}, ...}
 ```
 
 ---
 
-### 5. From Array-like
-
-Create a DataFrame from a numpy array:
+### 3. Build from dict-of-dicts and summarize
 
 ```python
+import polars as pl
 import kra
-import numpy as np
 
-data = np.array([[1, 2], [3, 4]])
-df = kra.from_arraylike(data, schema=["x", "y"], orient="col")
+dod = {
+    1: {"METRIC": "a", "V1": 10.0, "V2": 1.5},
+    2: {"METRIC": "b", "V1": 20.0, "V2": 2.5},
+    3: {"METRIC": "c", "V1": 30.0, "V2": 3.5},
+}
+df = kra.from_dod(dod, "id")
+
+summary = (
+    df
+    .cols.to_lowercase()
+    .agg(
+        pl.col("v1").sum().alias("v1_total"),
+        pl.col("v2").mean().alias("v2_avg")
+    )
+)
 ```
-
----
-
-
 ---
 
 kra includes a Rust extension for fast label encoding, accessible via the Python API.

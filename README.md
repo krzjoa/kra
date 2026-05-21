@@ -111,10 +111,6 @@ summary = (
     )
 )
 ```
----
-
-kra includes a Rust extension for fast label encoding, accessible via the Python API.
-
 
 ## Name
 
